@@ -1,3 +1,16 @@
 venv/
-.env
 __pycache__/
+.env
+
+data/raw/
+data/processed/
+data/vector_store/
+
+*.pyc
+*.pyo
+*.pyd
+
+.ipynb_checkpoints/
+
+.DS_Store
+Thumbs.db
