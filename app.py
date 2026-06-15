@@ -1,136 +1,132 @@
 import streamlit as st
-import numpy as np
-import faiss
 
-from utils.pdf_processing import extract_text_from_pdf
-from utils.preprocessing import clean_text
-from utils.chunking import chunk_text
-from utils.embeddings import generate_embeddings
+from dotenv import load_dotenv
 
-st.title("AI Study Copilot")
+from utils.pdf_processing import (
+    load_pdf
+)
 
-# -----------------------------
-# FILE UPLOAD
-# -----------------------------
+from utils.chunking import (
+    create_chunks
+)
+
+from utils.embeddings import (
+    generate_embeddings
+)
+
+from utils.vector_store import (
+    create_faiss_index
+)
+
+from utils.retrieval import (
+    retrieve_context
+)
+
+from utils.llm import (
+    generate_answer
+)
+
+load_dotenv()
+
+st.set_page_config(
+    page_title="AI Study Copilot",
+    layout="wide"
+)
+
+st.title(
+    "📚 AI Study Copilot"
+)
+
 uploaded_file = st.file_uploader(
-    "Upload your PDF",
-    type="pdf"
+    "Upload PDF",
+    type=["pdf"]
 )
 
 if uploaded_file:
 
-    # -----------------------------
-    # EXTRACT TEXT
-    # -----------------------------
-    extracted_text = extract_text_from_pdf(
-        uploaded_file
-    )
+    if "index" not in st.session_state:
 
-    st.subheader("Extracted Text")
+        with open(
+            "temp.pdf",
+            "wb"
+        ) as f:
 
-    st.write(extracted_text[:5000])
-
-    # -----------------------------
-    # CLEAN TEXT
-    # -----------------------------
-    cleaned_text = clean_text(
-        extracted_text
-    )
-
-    st.subheader("Cleaned Text")
-
-    st.write(cleaned_text[:5000])
-
-    # -----------------------------
-    # CHUNK TEXT
-    # -----------------------------
-    chunks = chunk_text(cleaned_text)
-
-    st.subheader("Generated Chunks")
-
-    for i, chunk in enumerate(chunks[:5]):
-
-        st.write(f"Chunk {i+1}")
-
-        st.write(chunk)
-
-        st.write("------")
-
-    # -----------------------------
-    # GENERATE EMBEDDINGS
-    # -----------------------------
-    st.subheader("Generating Embeddings...")
-
-    embeddings = generate_embeddings(chunks)
-
-    st.write("Embedding Shape:")
-
-    st.write(embeddings.shape)
-
-    # -----------------------------
-    # NORMALIZE EMBEDDINGS
-    # FOR COSINE SIMILARITY
-    # -----------------------------
-    faiss.normalize_L2(embeddings)
-
-    # -----------------------------
-    # CREATE FAISS INDEX
-    # -----------------------------
-    dimension = embeddings.shape[1]
-
-    index = faiss.IndexFlatIP(dimension)
-
-    index.add(embeddings)
-
-    st.success(
-        "Embeddings stored in FAISS!"
-    )
-
-    # -----------------------------
-    # USER QUESTION
-    # -----------------------------
-    question = st.text_input(
-        "Ask a question from the PDF"
-    )
-
-    if question:
-
-        # -----------------------------
-        # EMBED QUESTION
-        # -----------------------------
-        question_embedding = generate_embeddings(
-            [question]
-        )
-
-        faiss.normalize_L2(
-            question_embedding
-        )
-
-        # -----------------------------
-        # SEARCH FAISS
-        # -----------------------------
-        k = 3
-
-        distances, indices = index.search(
-            question_embedding,
-            k
-        )
-
-        # -----------------------------
-        # DISPLAY RESULTS
-        # -----------------------------
-        st.subheader(
-            "Most Relevant Chunks"
-        )
-
-        for i, idx in enumerate(
-            indices[0]
-        ):
-
-            st.write(
-                f"### Result {i+1}"
+            f.write(
+                uploaded_file.getbuffer()
             )
 
-            st.write(chunks[idx])
+        with st.spinner(
+            "Processing PDF..."
+        ):
 
-            st.write("---")
+            documents = load_pdf(
+                "temp.pdf"
+            )
+
+            chunks = create_chunks(
+                documents
+            )
+
+            embeddings = (
+                generate_embeddings(
+                    chunks
+                )
+            )
+
+            index = (
+                create_faiss_index(
+                    embeddings
+                )
+            )
+
+            st.session_state[
+                "chunks"
+            ] = chunks
+
+            st.session_state[
+                "index"
+            ] = index
+
+        st.success(
+            "PDF processed successfully!"
+        )
+
+    question = st.text_input(
+        "Ask a question about the PDF"
+    )
+
+    if (
+        st.button("Ask")
+        and question
+    ):
+
+        with st.spinner(
+            "Thinking..."
+        ):
+
+            context = (
+                retrieve_context(
+                    question,
+                    st.session_state[
+                        "index"
+                    ],
+                    st.session_state[
+                        "chunks"
+                    ]
+                )
+            )
+
+            answer = (
+                generate_answer(
+                    question,
+                    context
+                )
+            )
+
+        st.subheader(
+            "Answer"
+        )
+
+        st.write(
+            answer
+        )

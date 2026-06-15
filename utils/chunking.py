@@ -1,35 +1,22 @@
-import nltk
 
-nltk.download('punkt')
-nltk.download('punkt_tab')
-
-from nltk.tokenize import sent_tokenize
+from langchain_text_splitters import (
+    RecursiveCharacterTextSplitter
+)
 
 
-def chunk_text(text, chunk_size=500, overlap=100):
+def create_chunks(documents):
 
-    sentences = sent_tokenize(text)
+    text_splitter = (
+        RecursiveCharacterTextSplitter(
+            chunk_size=1000,
+            chunk_overlap=200
+        )
+    )
 
-    chunks = []
-
-    current_chunk = ""
-
-    for sentence in sentences:
-
-        if len(current_chunk) + len(sentence) < chunk_size:
-
-            current_chunk += sentence + " "
-
-        else:
-
-            chunks.append(current_chunk.strip())
-
-            overlap_text = current_chunk[-overlap:]
-
-            current_chunk = overlap_text + sentence + " "
-
-    if current_chunk:
-
-        chunks.append(current_chunk.strip())
+    chunks = (
+        text_splitter.split_documents(
+            documents
+        )
+    )
 
     return chunks

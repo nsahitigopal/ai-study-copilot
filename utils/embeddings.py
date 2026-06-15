@@ -1,22 +1,33 @@
-from sentence_transformers import SentenceTransformer
-import numpy as np
+from sentence_transformers import (
+    SentenceTransformer
+)
 
-# -----------------------------
-# LOAD MODEL
-# -----------------------------
 model = SentenceTransformer(
     "all-MiniLM-L6-v2"
 )
 
-# -----------------------------
-# GENERATE EMBEDDINGS
-# -----------------------------
-def generate_embeddings(text_chunks):
 
-    embeddings = model.encode(text_chunks)
+def generate_embeddings(
+    chunks
+):
 
-    embeddings = np.array(
-        embeddings
-    ).astype("float32")
+    texts = [
 
-    return embeddings
+        chunk.page_content
+
+        for chunk in chunks
+    ]
+
+    return model.encode(
+        texts,
+        show_progress_bar=True
+    )
+
+
+def embed_query(
+    query
+):
+
+    return model.encode(
+        [query]
+    )

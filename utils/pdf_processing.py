@@ -1,18 +1,16 @@
-from pypdf import PdfReader
+from langchain_community.document_loaders import (
+    PyMuPDFLoader
+)
 
 
-def extract_text_from_pdf(uploaded_file):
+def load_pdf(
+    pdf_path
+):
 
-    pdf_reader = PdfReader(uploaded_file)
+    loader = PyMuPDFLoader(
+        pdf_path
+    )
 
-    text = ""
+    documents = loader.load()
 
-    for page in pdf_reader.pages:
-
-        page_text = page.extract_text()
-
-        if page_text:
-
-            text += page_text + "\n"
-
-    return text
+    return documents
