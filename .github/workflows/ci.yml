@@ -1,6 +1,10 @@
 name: AI Study Copilot CI
 
 on:
+  push:
+    branches:
+      - main
+
   pull_request:
     branches:
       - main
@@ -29,8 +33,18 @@ jobs:
           python --version
           pip --version
 
-      - name: Run Unit Tests
-        run: pytest
+      - name: Verify Installed Packages
+        run: |
+          python -c "import streamlit"
+          python -c "import faiss"
+          python -c "import openai"
 
-      - name: Build Docker Image
-        run: docker build -t ai-study-copilot .
+      - name: Verify Project Imports
+        run: |
+          python -c "from utils.chunking import *"
+          python -c "from utils.embeddings import *"
+          python -c "from utils.vector_store import *"
+          python -c "from utils.retrieval import *"
+
+      - name: Run Tests
+        run: pytest
