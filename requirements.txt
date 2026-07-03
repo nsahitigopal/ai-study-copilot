@@ -13,3 +13,4 @@ torch==2.7.1
 sentence-transformers==5.0.0
 
 streamlit
+pytest
