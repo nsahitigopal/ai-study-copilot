@@ -1,0 +1,14 @@
+name: AI Study Copilot CI
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  hello-world:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Print Message
+        run: echo "Hello from GitHub Actions!"
