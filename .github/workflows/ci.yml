@@ -1,16 +1,17 @@
 name: AI Study Copilot CI
 
 on:
+  push:
+    branches:
+      - main
+
   pull_request:
     branches:
       - main
 
 jobs:
-  build-and-push:
+  build:
     runs-on: ubuntu-latest
-
-    permissions:
-      contents: read
 
     steps:
       - name: Checkout Repository
@@ -27,18 +28,23 @@ jobs:
       - name: Install Dependencies
         run: python -m pip install -r requirements.txt
 
+      - name: Verify Python Installation
+        run: |
+          python --version
+          pip --version
+
+      - name: Verify Installed Packages
+        run: |
+          python -c "import streamlit"
+          python -c "import faiss"
+          python -c "import openai"
+
+      - name: Verify Project Imports
+        run: |
+          python -c "from utils.chunking import *"
+          python -c "from utils.embeddings import *"
+          python -c "from utils.vector_store import *"
+          python -c "from utils.retrieval import *"
+
       - name: Run Tests
         run: pytest
-
-      - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ secrets.AWS_REGION }}
-
-      - name: Login to Amazon ECR
-        id: login-ecr
-        uses: aws-actions/amazon-ecr-login@v2
-
-      
